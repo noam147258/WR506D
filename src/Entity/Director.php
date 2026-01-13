@@ -3,16 +3,16 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
-use App\Repository\ActorRepository;
+use App\Repository\DirectorRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: ActorRepository::class)]
+#[ORM\Entity(repositoryClass: DirectorRepository::class)]
 #[ApiResource]
-class Actor
+class Director
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -29,37 +29,29 @@ class Actor
     )]
     private ?string $lastname = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le prénom est obligatoire")]
     #[Assert\Length(
+        min: 2,
         max: 255,
+        minMessage: "Le prénom doit contenir au moins {{ limit }} caractères",
         maxMessage: "Le prénom ne peut pas dépasser {{ limit }} caractères"
     )]
     private ?string $firstname = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Assert\NotBlank(message: "La date de naissance est obligatoire")]
     #[Assert\Type(\DateTimeInterface::class)]
-    #[Assert\LessThan('today', message: "La date de naissance doit être antérieure à aujourd'hui")]
     private ?\DateTime $dob = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     #[Assert\Type(\DateTimeInterface::class)]
     private ?\DateTime $dod = null;
-
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $bio = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Assert\Url(message: "La photo doit être une URL valide")]
-    #[Assert\Length(
-        max: 255,
-        maxMessage: "L'URL de la photo ne peut pas dépasser {{ limit }} caractères"
-    )]
-    private ?string $photo = null;
 
     /**
      * @var Collection<int, Movie>
      */
-    #[ORM\ManyToMany(targetEntity: Movie::class, inversedBy: 'actors')]
+    #[ORM\OneToMany(targetEntity: Movie::class, mappedBy: 'director')]
     private Collection $movies;
 
     #[ORM\Column]
@@ -92,7 +84,7 @@ class Actor
         return $this->firstname;
     }
 
-    public function setFirstname(?string $firstname): static
+    public function setFirstname(string $firstname): static
     {
         $this->firstname = $firstname;
 
@@ -104,7 +96,7 @@ class Actor
         return $this->dob;
     }
 
-    public function setDob(?\DateTime $dob): static
+    public function setDob(\DateTime $dob): static
     {
         $this->dob = $dob;
 
@@ -123,30 +115,6 @@ class Actor
         return $this;
     }
 
-    public function getBio(): ?string
-    {
-        return $this->bio;
-    }
-
-    public function setBio(?string $bio): static
-    {
-        $this->bio = $bio;
-
-        return $this;
-    }
-
-    public function getPhoto(): ?string
-    {
-        return $this->photo;
-    }
-
-    public function setPhoto(?string $photo): static
-    {
-        $this->photo = $photo;
-
-        return $this;
-    }
-
     /**
      * @return Collection<int, Movie>
      */
@@ -159,6 +127,7 @@ class Actor
     {
         if (!$this->movies->contains($movie)) {
             $this->movies->add($movie);
+            $movie->setDirector($this);
         }
 
         return $this;
@@ -166,7 +135,11 @@ class Actor
 
     public function removeMovie(Movie $movie): static
     {
-        $this->movies->removeElement($movie);
+        if ($this->movies->removeElement($movie)) {
+            if ($movie->getDirector() === $this) {
+                $movie->setDirector(null);
+            }
+        }
 
         return $this;
     }

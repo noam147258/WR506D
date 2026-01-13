@@ -12,11 +12,12 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MovieRepository::class)]
 #[ApiResource]
 // --- AJOUT DU FILTRE DE RECHERCHE ---
-#[ApiFilter(SearchFilter::class, properties: ['name' => 'partial'])]
+#[ApiFilter(SearchFilter::class, properties: ['id' => 'exact', 'name' => 'partial'])]
 class Movie
 {
     #[ORM\Id]
@@ -25,12 +26,24 @@ class Movie
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le nom du film est obligatoire")]
+    #[Assert\Length(
+        min: 2,
+        max: 255,
+        minMessage: "Le nom du film doit contenir au moins {{ limit }} caractères",
+        maxMessage: "Le nom du film ne peut pas dépasser {{ limit }} caractères"
+    )]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
     #[ORM\Column(nullable: true)]
+    #[Assert\Positive(message: "La durée doit être un nombre positif")]
+    #[Assert\LessThanOrEqual(
+        value: 600,
+        message: "La durée ne peut pas dépasser {{ compared_value }} minutes"
+    )]
     private ?int $duration = null;
 
     #[ORM\Column(nullable: true)]
@@ -56,6 +69,27 @@ class Movie
 
     #[ORM\Column]
     private ?bool $online = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Assert\PositiveOrZero(message: "Le nombre d'entrées doit être un nombre positif ou zéro")]
+    private ?int $nbEntries = null;
+
+    #[ORM\Column(length: 500, nullable: true)]
+    #[Assert\Url(message: "L'URL doit être une URL valide")]
+    #[Assert\Length(
+        max: 500,
+        maxMessage: "L'URL ne peut pas dépasser {{ limit }} caractères"
+    )]
+    private ?string $url = null;
+
+    #[ORM\Column(type: Types::DECIMAL, precision: 15, scale: 2, nullable: true)]
+    #[Assert\PositiveOrZero(message: "Le budget doit être un nombre positif ou zéro")]
+    private ?string $budget = null;
+
+    #[ORM\ManyToOne(targetEntity: Director::class, inversedBy: 'movies')]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Assert\NotNull(message: "Le réalisateur est obligatoire")]
+    private ?Director $director = null;
 
     public function __construct()
     {
@@ -202,6 +236,54 @@ class Movie
     public function setOnline(bool $online): static
     {
         $this->online = $online;
+
+        return $this;
+    }
+
+    public function getNbEntries(): ?int
+    {
+        return $this->nbEntries;
+    }
+
+    public function setNbEntries(?int $nbEntries): static
+    {
+        $this->nbEntries = $nbEntries;
+
+        return $this;
+    }
+
+    public function getUrl(): ?string
+    {
+        return $this->url;
+    }
+
+    public function setUrl(?string $url): static
+    {
+        $this->url = $url;
+
+        return $this;
+    }
+
+    public function getBudget(): ?string
+    {
+        return $this->budget;
+    }
+
+    public function setBudget(?string $budget): static
+    {
+        $this->budget = $budget;
+
+        return $this;
+    }
+
+    public function getDirector(): ?Director
+    {
+        return $this->director;
+    }
+
+    public function setDirector(?Director $director): static
+    {
+        $this->director = $director;
 
         return $this;
     }

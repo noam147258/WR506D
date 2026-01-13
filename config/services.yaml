@@ -22,9 +22,14 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # --- Services explicites pour l’exemple ---
+    # --- Services explicites pour l'exemple ---
     App\Service\MyEventService:
         arguments:
             $eventDispatcher: '@event_dispatcher'
 
     App\EventSubscriber\MyCustomEventSubscriber: ~
+
+    # State Processor pour le hachage automatique du mot de passe
+    App\State\UserPasswordHasher:
+        bind:
+            $processor: '@api_platform.doctrine.orm.state.persist_processor'
