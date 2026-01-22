@@ -81,7 +81,7 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Expose port
+# Expose port (Render will set PORT env var dynamically)
 EXPOSE 8080
 
 # Use entrypoint

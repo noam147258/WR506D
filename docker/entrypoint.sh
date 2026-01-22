@@ -1,6 +1,10 @@
 #!/bin/sh
 set -e
 
+# Render sets PORT automatically, use it for nginx
+PORT=${PORT:-8080}
+sed -i "s/listen 8080;/listen $PORT;/" /etc/nginx/nginx.conf
+
 # Generate JWT keys if they don't exist
 if [ ! -f /app/config/jwt/private.pem ] || [ ! -f /app/config/jwt/public.pem ]; then
     echo "Generating JWT keys..."
