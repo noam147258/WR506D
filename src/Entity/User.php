@@ -99,10 +99,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read'])]
     private ?\DateTimeImmutable $apiKeyLastUsedAt = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?string $twoFactorSecret = null;
+
+    #[ORM\Column]
+    private bool $twoFactorEnabled = false;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $twoFactorBackupCodes = null;
+
     public function __construct()
     {
         $this->createdAt = new DateTimeImmutable();
         $this->apiKeyEnabled = false;
+        $this->twoFactorEnabled = false;
     }
 
     public function getId(): ?int
@@ -279,6 +289,42 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function updateApiKeyLastUsedAt(): static
     {
         $this->apiKeyLastUsedAt = new DateTimeImmutable();
+
+        return $this;
+    }
+
+    public function getTwoFactorSecret(): ?string
+    {
+        return $this->twoFactorSecret;
+    }
+
+    public function setTwoFactorSecret(?string $twoFactorSecret): static
+    {
+        $this->twoFactorSecret = $twoFactorSecret;
+
+        return $this;
+    }
+
+    public function isTwoFactorEnabled(): bool
+    {
+        return $this->twoFactorEnabled;
+    }
+
+    public function setTwoFactorEnabled(bool $twoFactorEnabled): static
+    {
+        $this->twoFactorEnabled = $twoFactorEnabled;
+
+        return $this;
+    }
+
+    public function getTwoFactorBackupCodes(): ?array
+    {
+        return $this->twoFactorBackupCodes;
+    }
+
+    public function setTwoFactorBackupCodes(?array $twoFactorBackupCodes): static
+    {
+        $this->twoFactorBackupCodes = $twoFactorBackupCodes;
 
         return $this;
     }

@@ -16,6 +16,7 @@ class MyCustomEventSubscriber implements EventSubscriberInterface
 
     public function onMyCustomEvent(MyCustomEvent $event): void
     {
-        dump("Événement reçu avec data : " . $event->getData());
+        // Logique de traitement de l'événement
+        $data = $event->getData();
     }
 }

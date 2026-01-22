@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: DirectorRepository::class)]
@@ -17,6 +18,7 @@ class Director
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -27,6 +29,7 @@ class Director
         minMessage: "Le nom de famille doit contenir au moins {{ limit }} caractères",
         maxMessage: "Le nom de famille ne peut pas dépasser {{ limit }} caractères"
     )]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 255)]
@@ -37,6 +40,7 @@ class Director
         minMessage: "Le prénom doit contenir au moins {{ limit }} caractères",
         maxMessage: "Le prénom ne peut pas dépasser {{ limit }} caractères"
     )]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?string $firstname = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]

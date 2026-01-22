@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: symfony-app
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: APP_ENV
+        value: prod
+      - key: APP_DEBUG
+        value: 0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: symfony-db
+          property: connectionString
+      - key: JWT_PASSPHRASE
+        generateValue: true
+      - key: MESSENGER_TRANSPORT_DSN
+        value: doctrine://default
+      - key: MAILER_DSN
+        value: null://null
+    buildCommand: ""
+    startCommand: ""
+    healthCheckPath: /
+    autoDeploy: true
+
+databases:
+  - name: symfony-db
+    databaseName: symfony
+    user: symfony
+    plan: starter

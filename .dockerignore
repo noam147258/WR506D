@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+node_modules
+vendor
+var
+public/bundles
+.phpunit.cache
+.phpcs-cache
+docker/
+compose.yaml
+compose.override.yaml
+*.md
+tests/
+.github/

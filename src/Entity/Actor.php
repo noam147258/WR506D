@@ -12,23 +12,49 @@ use ApiPlatform\Metadata\Delete;
 use App\Repository\ActorRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use DateTime;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Context;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ActorRepository::class)]
-#[ApiResource]
-#[Get(security: "is_granted('ROLE_USER')")]
-#[GetCollection(security: "is_granted('ROLE_USER')")]
-#[Post(security: "is_granted('ROLE_ADMIN')")]
-#[Put(security: "is_granted('ROLE_ADMIN')")]
-#[Patch(security: "is_granted('ROLE_ADMIN')")]
-#[Delete(security: "is_granted('ROLE_ADMIN')")]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            security: "is_granted('ROLE_USER')",
+            normalizationContext: ['groups' => ['actor:list']]
+        ),
+        new Get(
+            security: "is_granted('ROLE_USER')",
+            normalizationContext: ['groups' => ['actor:read']]
+        ),
+        new Post(
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['actor:read']],
+            denormalizationContext: ['groups' => ['actor:write']]
+        ),
+        new Put(
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['actor:read']],
+            denormalizationContext: ['groups' => ['actor:write']]
+        ),
+        new Patch(
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['actor:read']],
+            denormalizationContext: ['groups' => ['actor:write']]
+        ),
+        new Delete(security: "is_granted('ROLE_ADMIN')")
+    ]
+)]
 class Actor
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['actor:list', 'actor:read', 'movie:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -39,6 +65,7 @@ class Actor
         minMessage: "Le nom de famille doit contenir au moins {{ limit }} caractères",
         maxMessage: "Le nom de famille ne peut pas dépasser {{ limit }} caractères"
     )]
+    #[Groups(['actor:read', 'actor:write'])]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -46,18 +73,24 @@ class Actor
         max: 255,
         maxMessage: "Le prénom ne peut pas dépasser {{ limit }} caractères"
     )]
+    #[Groups(['actor:read', 'actor:write'])]
     private ?string $firstname = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     #[Assert\Type(\DateTimeInterface::class)]
     #[Assert\LessThan('today', message: "La date de naissance doit être antérieure à aujourd'hui")]
+    #[Context([DateTimeNormalizer::FORMAT_KEY => 'd/m/Y'])]
+    #[Groups(['actor:read', 'actor:write'])]
     private ?\DateTime $dob = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     #[Assert\Type(\DateTimeInterface::class)]
+    #[Context([DateTimeNormalizer::FORMAT_KEY => 'd/m/Y'])]
+    #[Groups(['actor:read', 'actor:write'])]
     private ?\DateTime $dod = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['actor:read', 'actor:write'])]
     private ?string $bio = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -66,12 +99,14 @@ class Actor
         max: 255,
         maxMessage: "L'URL de la photo ne peut pas dépasser {{ limit }} caractères"
     )]
+    #[Groups(['actor:read', 'actor:write'])]
     private ?string $photo = null;
 
     /**
      * @var Collection<int, Movie>
      */
     #[ORM\ManyToMany(targetEntity: Movie::class, inversedBy: 'actors')]
+    #[Groups(['actor:read'])]
     private Collection $movies;
 
     /**
@@ -229,5 +264,38 @@ class Actor
         }
 
         return $this;
+    }
+
+    /**
+     * Nom complet (virtuel)
+     */
+    #[Groups(['actor:list', 'actor:read', 'movie:read'])]
+    public function getFullName(): string
+    {
+        return trim(($this->lastname ?? '') . ' ' . ($this->firstname ?? ''));
+    }
+
+    /**
+     * Âge calculé (virtuel)
+     */
+    #[Groups(['actor:list'])]
+    public function getAge(): ?int
+    {
+        if ($this->dob === null) {
+            return null;
+        }
+        // Si décédé, calcule l'âge au moment du décès
+        $reference = $this->dod ?? new DateTime();
+
+        return $this->dob->diff($reference)->y;
+    }
+
+    /**
+     * Indique si l'acteur est décédé (virtuel)
+     */
+    #[Groups(['actor:list'])]
+    public function getIsDead(): bool
+    {
+        return $this->dod !== null;
     }
 }

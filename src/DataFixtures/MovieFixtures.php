@@ -43,7 +43,7 @@ class MovieFixtures extends Fixture
             $movie = new Movie();
             /** @phpstan-ignore-next-line */
             $movie->setName($faker->movie());
-            $movie->setOnline($faker->boolean(70)); // 70% de chance d'être online
+            $movie->setOnline($faker->boolean(70));
             $movie->setCreatedAt(new DateTimeImmutable());
             $movie->addCategory($faker->randomElement($categories));
             $movie->addActor($faker->randomElement($actors));
