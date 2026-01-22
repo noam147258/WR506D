@@ -12,9 +12,7 @@ RUN apk add --no-cache \
     postgresql-dev \
     libzip-dev \
     icu-dev \
-    oniguruma-dev \
-    nodejs \
-    npm
+    oniguruma-dev
 
 # Install PHP extensions
 RUN docker-php-ext-install \
@@ -37,9 +35,6 @@ COPY . .
 
 # Complete Composer setup
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev
-
-# Build assets if needed
-RUN npm install && npm run build || true
 
 # Stage 2: Production image
 FROM php:8.3-fpm-alpine

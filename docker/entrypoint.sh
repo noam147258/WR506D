@@ -11,11 +11,18 @@ if [ ! -f /app/config/jwt/private.pem ] || [ ! -f /app/config/jwt/public.pem ]; 
     chmod 644 /app/config/jwt/public.pem
 fi
 
-# Wait for database to be ready
-until php bin/console doctrine:query:sql "SELECT 1" > /dev/null 2>&1; do
-    echo "Waiting for database..."
+# Wait for database to be ready (with timeout)
+timeout=60
+elapsed=0
+until php bin/console doctrine:query:sql "SELECT 1" > /dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
+    echo "Waiting for database... ($elapsed/$timeout seconds)"
     sleep 2
+    elapsed=$((elapsed + 2))
 done
+
+if [ $elapsed -ge $timeout ]; then
+    echo "Warning: Database connection timeout, continuing anyway..."
+fi
 
 # Run migrations
 php bin/console doctrine:migrations:migrate --no-interaction
