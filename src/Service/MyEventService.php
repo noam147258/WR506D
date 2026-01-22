@@ -16,10 +16,8 @@ class MyEventService
 
     public function doSomething(): void
     {
-        // Logique métier...
         $data = "Coucou, je viens de lancer un événement 🚀";
 
-        // Déclenchement
         $event = new MyCustomEvent($data);
         $this->eventDispatcher->dispatch($event);
     }

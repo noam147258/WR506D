@@ -14,6 +14,6 @@ class DemoController extends AbstractController
     {
         $service->doSomething(); // Déclenche l’événement
 
-        return new Response("Événement déclenché, regarde les logs/debug 😎");
+        return new Response("Événement déclenché");
     }
 }

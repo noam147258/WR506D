@@ -18,16 +18,40 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Context;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: MovieRepository::class)]
-#[ApiResource]
-#[Get(security: "is_granted('ROLE_USER')")]
-#[GetCollection(security: "is_granted('ROLE_USER')")]
-#[Post(security: "is_granted('ROLE_ADMIN')")]
-#[Put(security: "is_granted('ROLE_ADMIN')")]
-#[Patch(security: "is_granted('ROLE_ADMIN')")]
-#[Delete(security: "is_granted('ROLE_ADMIN')")]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            security: "is_granted('ROLE_USER')",
+            normalizationContext: ['groups' => ['movie:list']]
+        ),
+        new Get(
+            security: "is_granted('ROLE_USER')",
+            normalizationContext: ['groups' => ['movie:read']]
+        ),
+        new Post(
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['movie:read']],
+            denormalizationContext: ['groups' => ['movie:write']]
+        ),
+        new Put(
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['movie:read']],
+            denormalizationContext: ['groups' => ['movie:write']]
+        ),
+        new Patch(
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['movie:read']],
+            denormalizationContext: ['groups' => ['movie:write']]
+        ),
+        new Delete(security: "is_granted('ROLE_ADMIN')")
+    ]
+)]
 // --- AJOUT DU FILTRE DE RECHERCHE ---
 #[ApiFilter(SearchFilter::class, properties: ['id' => 'exact', 'name' => 'partial'])]
 class Movie
@@ -35,6 +59,7 @@ class Movie
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['movie:list', 'movie:read', 'actor:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -45,9 +70,11 @@ class Movie
         minMessage: "Le nom du film doit contenir au moins {{ limit }} caractères",
         maxMessage: "Le nom du film ne peut pas dépasser {{ limit }} caractères"
     )]
+    #[Groups(['movie:list', 'movie:read', 'movie:write', 'actor:read'])]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?string $description = null;
 
     #[ORM\Column(nullable: true)]
@@ -56,34 +83,43 @@ class Movie
         value: 600,
         message: "La durée ne peut pas dépasser {{ compared_value }} minutes"
     )]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?int $duration = null;
 
     #[ORM\Column(nullable: true)]
+    #[Context([DateTimeNormalizer::FORMAT_KEY => 'd/m/Y'])]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?\DateTime $releaseDate = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?string $image = null;
 
     #[ORM\Column]
+    #[Groups(['movie:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     /**
      * @var Collection<int, Category>
      */
     #[ORM\ManyToMany(targetEntity: Category::class, mappedBy: 'movies')]
+    #[Groups(['movie:read', 'movie:write'])]
     private Collection $categories;
 
     /**
      * @var Collection<int, Actor>
      */
     #[ORM\ManyToMany(targetEntity: Actor::class, mappedBy: 'movies')]
+    #[Groups(['movie:read'])]
     private Collection $actors;
 
     #[ORM\Column]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?bool $online = null;
 
     #[ORM\Column(nullable: true)]
     #[Assert\PositiveOrZero(message: "Le nombre d'entrées doit être un nombre positif ou zéro")]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?int $nbEntries = null;
 
     #[ORM\Column(length: 500, nullable: true)]
@@ -92,15 +128,18 @@ class Movie
         max: 500,
         maxMessage: "L'URL ne peut pas dépasser {{ limit }} caractères"
     )]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?string $url = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 15, scale: 2, nullable: true)]
     #[Assert\PositiveOrZero(message: "Le budget doit être un nombre positif ou zéro")]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?string $budget = null;
 
     #[ORM\ManyToOne(targetEntity: Director::class, inversedBy: 'movies')]
     #[ORM\JoinColumn(nullable: true)]
     #[Assert\NotNull(message: "Le réalisateur est obligatoire")]
+    #[Groups(['movie:read', 'movie:write'])]
     private ?Director $director = null;
 
     /**
@@ -334,5 +373,30 @@ class Movie
         }
 
         return $this;
+    }
+
+    /**
+     * Durée formatée (virtuel)
+     */
+    #[Groups(['movie:list', 'movie:read'])]
+    public function getFormattedDuration(): ?string
+    {
+        if ($this->duration === null) {
+            return null;
+        }
+
+        $heures = intval($this->duration / 60);
+        $minutes = $this->duration % 60;
+
+        return sprintf('%dh %dmin', $heures, $minutes);
+    }
+
+    /**
+     * Nombre d'acteurs (virtuel)
+     */
+    #[Groups(['movie:list', 'movie:read'])]
+    public function getActorCount(): int
+    {
+        return $this->actors->count();
     }
 }
