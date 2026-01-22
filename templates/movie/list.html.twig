@@ -1,0 +1,153 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des films{% endblock %}
+
+{% block stylesheets %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: #f5f5f5;
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 8px;
+        padding: 40px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .back-link {
+        display: inline-block;
+        color: #666;
+        text-decoration: none;
+        margin-bottom: 20px;
+        font-size: 0.9rem;
+    }
+    
+    .back-link:hover {
+        color: #333;
+    }
+    
+    h1 {
+        color: #333;
+        font-size: 2rem;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+    
+    .subtitle {
+        color: #666;
+        font-size: 1rem;
+        margin-bottom: 30px;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    
+    th {
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+        color: #333;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    td {
+        padding: 12px;
+        border-bottom: 1px solid #e0e0e0;
+        color: #555;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        background: #333;
+        color: white;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        margin-right: 4px;
+    }
+    
+    .navigation {
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    .navigation a,
+    .navigation span {
+        display: inline-block;
+        padding: 8px 12px;
+        margin: 0 2px;
+        color: #333;
+        text-decoration: none;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+    }
+    
+    .navigation a:hover {
+        background: #f5f5f5;
+    }
+    
+    .navigation .current {
+        background: #333;
+        color: white;
+        border-color: #333;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <a href="{{ path('home') }}" class="back-link">← Retour à l'accueil</a>
+    <h1>Liste des films</h1>
+    <p class="subtitle">Total : {{ pagination.getTotalItemCount }} films</p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Titre</th>
+                <th>Date de création</th>
+                <th>Catégories</th>
+                <th>Acteurs</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movie in pagination %}
+                <tr>
+                    <td>{{ movie.id }}</td>
+                    <td>{{ movie.name }}</td>
+                    <td>{{ movie.createdAt|date('d/m/Y H:i') }}</td>
+                    <td>
+                        {% for category in movie.categories %}
+                            <span class="badge">{{ category.name }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for actor in movie.actors %}
+                            {{ actor.firstname }} {{ actor.lastname }}{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="navigation">
+        {{ knp_pagination_render(pagination) }}
+    </div>
+</div>
+{% endblock %}
