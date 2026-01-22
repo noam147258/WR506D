@@ -28,4 +28,4 @@ databases:
   - name: symfony-db
     databaseName: symfony
     user: symfony
-    plan: starter
+    plan: free
