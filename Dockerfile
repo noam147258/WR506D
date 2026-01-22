@@ -67,11 +67,9 @@ RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
 # Copy built application from builder
 COPY --from=builder /app /app
 
-# Create JWT directory
-RUN mkdir -p /app/config/jwt
-
-# Set permissions
-RUN chown -R www-data:www-data /app/var /app/public /app/config/jwt
+# Create necessary directories and set permissions
+RUN mkdir -p /app/config/jwt /app/var /app/public && \
+    chown -R www-data:www-data /app/var /app/public /app/config/jwt || true
 
 # Copy nginx configuration
 COPY docker/nginx.conf /etc/nginx/nginx.conf
