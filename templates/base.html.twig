@@ -8,13 +8,8 @@
         {% endblock %}
 
         {% block javascripts %}
-            {% block importmap %}
-                {% try %}
-                    {{ importmap('app') }}
-                {% catch %}
-                    {# Importmap not available, skip #}
-                {% endcatch %}
-            {% endblock %}
+            {# Importmap is optional - will be added if assets are installed #}
+            {% block importmap %}{% endblock %}
         {% endblock %}
     </head>
     <body>
