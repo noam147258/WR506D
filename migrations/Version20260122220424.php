@@ -12,6 +12,11 @@ use Doctrine\Migrations\AbstractMigration;
  */
 final class Version20260122220424 extends AbstractMigration
 {
+    private function isPostgres(): bool
+    {
+        return $this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+    }
+
     public function getDescription(): string
     {
         return '';
@@ -19,13 +24,19 @@ final class Version20260122220424 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE user ADD two_factor_secret VARCHAR(255) DEFAULT NULL, ADD two_factor_enabled TINYINT(1) NOT NULL, ADD two_factor_backup_codes JSON DEFAULT NULL COMMENT \'(DC2Type:json)\'');
+        if ($this->isPostgres()) {
+            $this->addSql('ALTER TABLE "user" ADD two_factor_secret VARCHAR(255) DEFAULT NULL, ADD two_factor_enabled BOOLEAN NOT NULL, ADD two_factor_backup_codes JSON DEFAULT NULL');
+        } else {
+            $this->addSql('ALTER TABLE user ADD two_factor_secret VARCHAR(255) DEFAULT NULL, ADD two_factor_enabled TINYINT(1) NOT NULL, ADD two_factor_backup_codes JSON DEFAULT NULL COMMENT \'(DC2Type:json)\'');
+        }
     }
 
     public function down(Schema $schema): void
     {
-        // this down() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE `user` DROP two_factor_secret, DROP two_factor_enabled, DROP two_factor_backup_codes');
+        if ($this->isPostgres()) {
+            $this->addSql('ALTER TABLE "user" DROP two_factor_secret, DROP two_factor_enabled, DROP two_factor_backup_codes');
+        } else {
+            $this->addSql('ALTER TABLE `user` DROP two_factor_secret, DROP two_factor_enabled, DROP two_factor_backup_codes');
+        }
     }
 }
