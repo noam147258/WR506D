@@ -33,6 +33,12 @@ if [ ! -f /app/config/jwt/private.pem ] || [ ! -f /app/config/jwt/public.pem ]; 
     chmod 644 /app/config/jwt/public.pem
 fi
 
+# Install importmap assets (needed for base.html.twig)
+echo "Installing importmap assets..."
+php bin/console importmap:install --no-interaction 2>&1 || {
+    echo "Importmap install failed, but continuing..."
+}
+
 # Clear cache first (doesn't need database)
 echo "Clearing Symfony cache..."
 php bin/console cache:clear --env=prod --no-debug 2>&1 || {
