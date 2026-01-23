@@ -12,6 +12,11 @@ use Doctrine\Migrations\AbstractMigration;
  */
 final class Version20251013145050 extends AbstractMigration
 {
+    private function isPostgres(): bool
+    {
+        return $this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+    }
+
     public function getDescription(): string
     {
         return '';
@@ -19,10 +24,7 @@ final class Version20251013145050 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $platform = $this->connection->getDatabasePlatform();
-        $isPostgres = $platform instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform;
-        
-        if ($isPostgres) {
+        if ($this->isPostgres()) {
             // PostgreSQL syntax
             $this->addSql('CREATE TABLE actor (id SERIAL NOT NULL, lastname VARCHAR(255) NOT NULL, firstname VARCHAR(255) DEFAULT NULL, dob DATE DEFAULT NULL, dod DATE DEFAULT NULL, bio TEXT DEFAULT NULL, photo VARCHAR(255) DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, PRIMARY KEY(id))');
             $this->addSql('CREATE TABLE actor_movie (actor_id INT NOT NULL, movie_id INT NOT NULL, PRIMARY KEY(actor_id, movie_id))');
