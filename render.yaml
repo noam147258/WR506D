@@ -21,7 +21,7 @@ services:
         value: null://null
     buildCommand: ""
     startCommand: ""
-    healthCheckPath: /health
+    healthCheckPath: /
     autoDeploy: true
 
 databases:
