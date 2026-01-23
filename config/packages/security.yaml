@@ -20,12 +20,19 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+        api_users_create:
+            pattern: ^/api/users$
+            methods: [POST]
+            stateless: true
+            security: false
         api:
             pattern: ^/api/
             stateless: true
             jwt: ~
             custom_authenticators:
                 - App\Security\ApiKeyAuthenticator
+            entry_point: jwt
+            lazy: true
         main:
             lazy: true
             provider: app_user_provider
