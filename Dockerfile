@@ -36,6 +36,9 @@ COPY . .
 # Complete Composer setup
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev
 
+# Install importmap assets (needed for base.html.twig)
+RUN php bin/console importmap:install --no-interaction || echo "Importmap install skipped"
+
 # Stage 2: Production image
 FROM php:8.3-fpm-alpine
 
