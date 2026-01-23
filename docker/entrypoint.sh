@@ -8,12 +8,14 @@ sed -i "s/listen 8080;/listen $PORT;/" /etc/nginx/nginx.conf
 # Create minimal .env file if it doesn't exist (required by Symfony)
 if [ ! -f /app/.env ]; then
     echo "Creating .env file..."
+    APP_SECRET_VALUE=${APP_SECRET:-$(openssl rand -hex 32)}
     cat > /app/.env <<EOF
 APP_ENV=prod
-APP_SECRET=\${APP_SECRET:-$(openssl rand -hex 32)}
-DATABASE_URL=\${DATABASE_URL}
-JWT_PASSPHRASE=\${JWT_PASSPHRASE}
+APP_SECRET=$APP_SECRET_VALUE
+DATABASE_URL=${DATABASE_URL}
+JWT_PASSPHRASE=${JWT_PASSPHRASE}
 EOF
+    echo ".env file created with DATABASE_URL=${DATABASE_URL:0:20}..."
 fi
 
 # Generate JWT keys if they don't exist
