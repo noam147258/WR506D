@@ -44,7 +44,10 @@ if [ -n "$DATABASE_URL" ]; then
 
     if php bin/console doctrine:query:sql "SELECT 1" > /dev/null 2>&1; then
         echo "Database connection successful! Running migrations..."
-        php bin/console doctrine:migrations:migrate --no-interaction || echo "Migrations failed, continuing..."
+        php bin/console doctrine:migrations:migrate --no-interaction || {
+            echo "Migrations failed, but continuing startup..."
+            echo "You may need to fix migrations manually later"
+        }
     else
         echo "Warning: Database not ready yet (timeout after $timeout seconds)."
         echo "Application will start anyway. Migrations will be skipped for now."
