@@ -19,7 +19,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: '`user`')]
     #[ApiResource(
         operations: [
-        new Post(processor: UserPasswordHasher::class),
+        new Post(
+            processor: UserPasswordHasher::class,
+            validationContext: ['groups' => ['user:create']]
+        ),
         new Put(processor: UserPasswordHasher::class),
         new Patch(processor: UserPasswordHasher::class),
         ],
