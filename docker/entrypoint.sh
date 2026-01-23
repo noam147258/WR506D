@@ -3,7 +3,10 @@ set -e
 
 # Render sets PORT automatically, use it for nginx
 PORT=${PORT:-8080}
+echo "Setting nginx to listen on port $PORT"
 sed -i "s/listen 8080;/listen $PORT;/" /etc/nginx/nginx.conf
+echo "Nginx configuration updated. Verifying..."
+grep "listen $PORT" /etc/nginx/nginx.conf || echo "WARNING: Port not found in nginx config!"
 
 # Create minimal .env file if it doesn't exist (required by Symfony)
 if [ ! -f /app/.env ]; then
@@ -59,5 +62,9 @@ fi
 
 # Set permissions
 chown -R www-data:www-data /app/var /app/public /app/config/jwt
+
+echo "=== Entrypoint completed successfully ==="
+echo "PORT is set to: $PORT"
+echo "Starting supervisor with nginx and php-fpm..."
 
 exec "$@"
