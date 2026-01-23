@@ -52,6 +52,7 @@ security:
         - { path: ^/api/users$, methods: [POST], roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/movies, roles: PUBLIC_ACCESS }
+        - { path: ^/actors, roles: PUBLIC_ACCESS }
         # - { path: ^/profile, roles: ROLE_USER }
 
 when@test:
