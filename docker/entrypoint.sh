@@ -5,6 +5,17 @@ set -e
 PORT=${PORT:-8080}
 sed -i "s/listen 8080;/listen $PORT;/" /etc/nginx/nginx.conf
 
+# Create minimal .env file if it doesn't exist (required by Symfony)
+if [ ! -f /app/.env ]; then
+    echo "Creating .env file..."
+    cat > /app/.env <<EOF
+APP_ENV=prod
+APP_SECRET=\${APP_SECRET:-$(openssl rand -hex 32)}
+DATABASE_URL=\${DATABASE_URL}
+JWT_PASSPHRASE=\${JWT_PASSPHRASE}
+EOF
+fi
+
 # Generate JWT keys if they don't exist
 if [ ! -f /app/config/jwt/private.pem ] || [ ! -f /app/config/jwt/public.pem ]; then
     echo "Generating JWT keys..."
@@ -16,16 +27,24 @@ if [ ! -f /app/config/jwt/private.pem ] || [ ! -f /app/config/jwt/public.pem ]; 
 fi
 
 # Wait for database to be ready (with timeout)
-timeout=60
-elapsed=0
-until php bin/console doctrine:query:sql "SELECT 1" > /dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
-    echo "Waiting for database... ($elapsed/$timeout seconds)"
-    sleep 2
-    elapsed=$((elapsed + 2))
-done
+if [ -n "$DATABASE_URL" ]; then
+    timeout=120
+    elapsed=0
+    echo "Waiting for database connection..."
+    until php bin/console doctrine:query:sql "SELECT 1" > /dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
+        echo "Waiting for database... ($elapsed/$timeout seconds)"
+        sleep 2
+        elapsed=$((elapsed + 2))
+    done
 
-if [ $elapsed -ge $timeout ]; then
-    echo "Warning: Database connection timeout, continuing anyway..."
+    if [ $elapsed -ge $timeout ]; then
+        echo "ERROR: Database connection timeout after $timeout seconds!"
+        echo "DATABASE_URL is set: $([ -n "$DATABASE_URL" ] && echo 'yes' || echo 'no')"
+        exit 1
+    fi
+    echo "Database connection successful!"
+else
+    echo "WARNING: DATABASE_URL is not set, skipping database operations"
 fi
 
 # Run migrations
