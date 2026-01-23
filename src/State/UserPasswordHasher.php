@@ -18,12 +18,17 @@ final class UserPasswordHasher implements ProcessorInterface
         if (!$data->getPlainPassword()) {
             return $this->processor->process($data, $operation, $uriVariables, $context);
         }
-        $hashedPassword = $this->passwordHasher->hashPassword(
-            $data,
-            $data->getPlainPassword()
-        );
-        $data->setPassword($hashedPassword);
-        $data->eraseCredentials();
-        return $this->processor->process($data, $operation, $uriVariables, $context);
+        
+        try {
+            $hashedPassword = $this->passwordHasher->hashPassword(
+                $data,
+                $data->getPlainPassword()
+            );
+            $data->setPassword($hashedPassword);
+            $data->eraseCredentials();
+            return $this->processor->process($data, $operation, $uriVariables, $context);
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Error hashing password: ' . $e->getMessage(), 0, $e);
+        }
     }
 }
