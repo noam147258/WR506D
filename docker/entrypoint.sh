@@ -1,5 +1,6 @@
 #!/bin/sh
-set -e
+# Don't exit on error - we want the app to start even if some steps fail
+set +e
 
 # Render sets PORT automatically, use it for nginx
 PORT=${PORT:-8080}
@@ -32,7 +33,12 @@ if [ ! -f /app/config/jwt/private.pem ] || [ ! -f /app/config/jwt/public.pem ]; 
 fi
 
 # Clear cache first (doesn't need database)
-php bin/console cache:clear --env=prod --no-debug || echo "Cache clear failed, continuing..."
+echo "Clearing Symfony cache..."
+php bin/console cache:clear --env=prod --no-debug 2>&1 || {
+    echo "Cache clear failed, but continuing..."
+    # Try to create var directory if it doesn't exist
+    mkdir -p /app/var/cache/prod /app/var/log
+}
 
 # Wait for database to be ready (with shorter timeout) - don't block startup
 if [ -n "$DATABASE_URL" ]; then
