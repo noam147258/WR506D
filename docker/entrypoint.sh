@@ -28,32 +28,31 @@ if [ ! -f /app/config/jwt/private.pem ] || [ ! -f /app/config/jwt/public.pem ]; 
     chmod 644 /app/config/jwt/public.pem
 fi
 
-# Wait for database to be ready (with timeout)
+# Clear cache first (doesn't need database)
+php bin/console cache:clear --env=prod --no-debug || echo "Cache clear failed, continuing..."
+
+# Wait for database to be ready (with shorter timeout) - don't block startup
 if [ -n "$DATABASE_URL" ]; then
-    timeout=120
+    timeout=30
     elapsed=0
-    echo "Waiting for database connection..."
+    echo "Checking database connection..."
     until php bin/console doctrine:query:sql "SELECT 1" > /dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
         echo "Waiting for database... ($elapsed/$timeout seconds)"
         sleep 2
         elapsed=$((elapsed + 2))
     done
 
-    if [ $elapsed -ge $timeout ]; then
-        echo "ERROR: Database connection timeout after $timeout seconds!"
-        echo "DATABASE_URL is set: $([ -n "$DATABASE_URL" ] && echo 'yes' || echo 'no')"
-        exit 1
+    if php bin/console doctrine:query:sql "SELECT 1" > /dev/null 2>&1; then
+        echo "Database connection successful! Running migrations..."
+        php bin/console doctrine:migrations:migrate --no-interaction || echo "Migrations failed, continuing..."
+    else
+        echo "Warning: Database not ready yet (timeout after $timeout seconds)."
+        echo "Application will start anyway. Migrations will be skipped for now."
+        echo "You can run migrations manually later when database is ready."
     fi
-    echo "Database connection successful!"
 else
     echo "WARNING: DATABASE_URL is not set, skipping database operations"
 fi
-
-# Run migrations
-php bin/console doctrine:migrations:migrate --no-interaction
-
-# Clear cache
-php bin/console cache:clear --env=prod --no-debug
 
 # Set permissions
 chown -R www-data:www-data /app/var /app/public /app/config/jwt
