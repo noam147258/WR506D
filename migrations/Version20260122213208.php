@@ -12,6 +12,11 @@ use Doctrine\Migrations\AbstractMigration;
  */
 final class Version20260122213208 extends AbstractMigration
 {
+    private function isPostgres(): bool
+    {
+        return $this->connection->getDatabasePlatform() instanceof \Doctrine\DBAL\Platforms\PostgreSQLPlatform;
+    }
+
     public function getDescription(): string
     {
         return '';
@@ -19,16 +24,29 @@ final class Version20260122213208 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('CREATE TABLE media_object (id INT AUTO_INCREMENT NOT NULL, actor_id INT DEFAULT NULL, movie_id INT DEFAULT NULL, file_path VARCHAR(255) DEFAULT NULL, mime_type VARCHAR(255) DEFAULT NULL, created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', INDEX IDX_14D4313210DAF24A (actor_id), INDEX IDX_14D431328F93B6FC (movie_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
-        $this->addSql('ALTER TABLE media_object ADD CONSTRAINT FK_14D4313210DAF24A FOREIGN KEY (actor_id) REFERENCES actor (id)');
-        $this->addSql('ALTER TABLE media_object ADD CONSTRAINT FK_14D431328F93B6FC FOREIGN KEY (movie_id) REFERENCES movie (id)');
-        $this->addSql('ALTER TABLE user ADD rate_limit INT DEFAULT NULL, ADD api_key_hash VARCHAR(64) DEFAULT NULL, ADD api_key_prefix VARCHAR(16) DEFAULT NULL, ADD api_key_enabled TINYINT(1) NOT NULL, ADD api_key_created_at DATETIME DEFAULT NULL COMMENT \'(DC2Type:datetime_immutable)\', ADD api_key_last_used_at DATETIME DEFAULT NULL COMMENT \'(DC2Type:datetime_immutable)\'');
-        $this->addSql('CREATE UNIQUE INDEX UNIQ_8D93D649848473FE ON user (api_key_hash)');
-        $this->addSql('DROP INDEX IDX_75EA56E0FB7336F0 ON messenger_messages');
-        $this->addSql('DROP INDEX IDX_75EA56E0E3BD61CE ON messenger_messages');
-        $this->addSql('DROP INDEX IDX_75EA56E016BA31DB ON messenger_messages');
-        $this->addSql('CREATE INDEX IDX_75EA56E0FB7336F0E3BD61CE16BA31DBBF396750 ON messenger_messages (queue_name, available_at, delivered_at, id)');
+        if ($this->isPostgres()) {
+            $this->addSql('CREATE TABLE media_object (id SERIAL NOT NULL, actor_id INT DEFAULT NULL, movie_id INT DEFAULT NULL, file_path VARCHAR(255) DEFAULT NULL, mime_type VARCHAR(255) DEFAULT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, PRIMARY KEY(id))');
+            $this->addSql('CREATE INDEX IDX_14D4313210DAF24A ON media_object (actor_id)');
+            $this->addSql('CREATE INDEX IDX_14D431328F93B6FC ON media_object (movie_id)');
+            $this->addSql('ALTER TABLE media_object ADD CONSTRAINT FK_14D4313210DAF24A FOREIGN KEY (actor_id) REFERENCES actor (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
+            $this->addSql('ALTER TABLE media_object ADD CONSTRAINT FK_14D431328F93B6FC FOREIGN KEY (movie_id) REFERENCES movie (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
+            $this->addSql('ALTER TABLE "user" ADD rate_limit INT DEFAULT NULL, ADD api_key_hash VARCHAR(64) DEFAULT NULL, ADD api_key_prefix VARCHAR(16) DEFAULT NULL, ADD api_key_enabled BOOLEAN NOT NULL, ADD api_key_created_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, ADD api_key_last_used_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL');
+            $this->addSql('CREATE UNIQUE INDEX UNIQ_8D93D649848473FE ON "user" (api_key_hash)');
+            $this->addSql('DROP INDEX IDX_75EA56E0FB7336F0');
+            $this->addSql('DROP INDEX IDX_75EA56E0E3BD61CE');
+            $this->addSql('DROP INDEX IDX_75EA56E016BA31DB');
+            $this->addSql('CREATE INDEX IDX_75EA56E0FB7336F0E3BD61CE16BA31DBBF396750 ON messenger_messages (queue_name, available_at, delivered_at, id)');
+        } else {
+            $this->addSql('CREATE TABLE media_object (id INT AUTO_INCREMENT NOT NULL, actor_id INT DEFAULT NULL, movie_id INT DEFAULT NULL, file_path VARCHAR(255) DEFAULT NULL, mime_type VARCHAR(255) DEFAULT NULL, created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\', INDEX IDX_14D4313210DAF24A (actor_id), INDEX IDX_14D431328F93B6FC (movie_id), PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB');
+            $this->addSql('ALTER TABLE media_object ADD CONSTRAINT FK_14D4313210DAF24A FOREIGN KEY (actor_id) REFERENCES actor (id)');
+            $this->addSql('ALTER TABLE media_object ADD CONSTRAINT FK_14D431328F93B6FC FOREIGN KEY (movie_id) REFERENCES movie (id)');
+            $this->addSql('ALTER TABLE user ADD rate_limit INT DEFAULT NULL, ADD api_key_hash VARCHAR(64) DEFAULT NULL, ADD api_key_prefix VARCHAR(16) DEFAULT NULL, ADD api_key_enabled TINYINT(1) NOT NULL, ADD api_key_created_at DATETIME DEFAULT NULL COMMENT \'(DC2Type:datetime_immutable)\', ADD api_key_last_used_at DATETIME DEFAULT NULL COMMENT \'(DC2Type:datetime_immutable)\'');
+            $this->addSql('CREATE UNIQUE INDEX UNIQ_8D93D649848473FE ON user (api_key_hash)');
+            $this->addSql('DROP INDEX IDX_75EA56E0FB7336F0 ON messenger_messages');
+            $this->addSql('DROP INDEX IDX_75EA56E0E3BD61CE ON messenger_messages');
+            $this->addSql('DROP INDEX IDX_75EA56E016BA31DB ON messenger_messages');
+            $this->addSql('CREATE INDEX IDX_75EA56E0FB7336F0E3BD61CE16BA31DBBF396750 ON messenger_messages (queue_name, available_at, delivered_at, id)');
+        }
     }
 
     public function down(Schema $schema): void
