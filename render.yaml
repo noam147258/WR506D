@@ -19,6 +19,8 @@ services:
         value: doctrine://default
       - key: MAILER_DSN
         value: null://null
+      - key: CORS_ALLOW_ORIGIN
+        value: '*'
     buildCommand: ""
     startCommand: ""
     healthCheckPath: /
