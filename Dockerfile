@@ -14,10 +14,12 @@ RUN apk add --no-cache \
     icu-dev \
     oniguruma-dev \
     libpng-dev \
-    freetype-dev
+    freetype-dev \
+    jpeg-dev
 
 # Install PHP extensions
-RUN docker-php-ext-install \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
     pdo_pgsql \
     zip \
     intl \
