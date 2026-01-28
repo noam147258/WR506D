@@ -56,7 +56,10 @@ class TwoFactorController extends AbstractController
         } catch (\Exception $e) {
             return $this->json([
                 'error' => 'Failed to setup 2FA',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
             ], 500);
         }
     }

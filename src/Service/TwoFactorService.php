@@ -33,15 +33,18 @@ class TwoFactorService
     private function getTOTP(User $user): TOTP
     {
         $secret = $user->getTwoFactorSecret();
-        if ($secret === null) {
+        if ($secret === null || $secret === '') {
             throw new \RuntimeException('User does not have a 2FA secret');
         }
 
-        $totp = TOTP::createFromSecret($secret);
-        $totp->setLabel($user->getEmail() ?? 'user');
-        $totp->setIssuer($this->issuer);
-
-        return $totp;
+        try {
+            $totp = TOTP::createFromSecret($secret);
+            $totp->setLabel($user->getEmail() ?? 'user');
+            $totp->setIssuer($this->issuer);
+            return $totp;
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Failed to create TOTP: ' . $e->getMessage(), 0, $e);
+        }
     }
 
     /**
@@ -57,19 +60,23 @@ class TwoFactorService
      */
     public function getQrCode(User $user): string
     {
-        $provisioningUri = $this->getProvisioningUri($user);
+        try {
+            $provisioningUri = $this->getProvisioningUri($user);
 
-        /** @phpstan-ignore-next-line */
-        $result = Builder::create()
-            ->writer(new PngWriter())
-            ->data($provisioningUri)
-            ->encoding(new Encoding('UTF-8'))
-            ->errorCorrectionLevel(ErrorCorrectionLevel::High)
-            ->size(300)
-            ->margin(10)
-            ->build();
+            /** @phpstan-ignore-next-line */
+            $result = Builder::create()
+                ->writer(new PngWriter())
+                ->data($provisioningUri)
+                ->encoding(new Encoding('UTF-8'))
+                ->errorCorrectionLevel(ErrorCorrectionLevel::High)
+                ->size(300)
+                ->margin(10)
+                ->build();
 
-        return 'data:image/png;base64,' . base64_encode($result->getString());
+            return 'data:image/png;base64,' . base64_encode($result->getString());
+        } catch (\Exception $e) {
+            throw new \RuntimeException('Failed to generate QR code: ' . $e->getMessage(), 0, $e);
+        }
     }
 
     /**
