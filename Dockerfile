@@ -52,12 +52,14 @@ RUN apk add --no-cache \
     oniguruma-dev \
     libpng-dev \
     freetype-dev \
+    jpeg-dev \
     nginx \
     supervisor \
     openssl
 
 # Install PHP extensions
-RUN docker-php-ext-install \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
     pdo_pgsql \
     zip \
     intl \
