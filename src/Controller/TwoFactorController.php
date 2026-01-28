@@ -147,4 +147,46 @@ class TwoFactorController extends AbstractController
             'has_backup_codes' => $user->getTwoFactorBackupCodes() !== null && count($user->getTwoFactorBackupCodes()) > 0,
         ]);
     }
+
+    #[Route('/verify', name: 'app_2fa_verify', methods: ['POST'])]
+    public function verify(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return $this->json(['error' => 'User not found'], 401);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $otp = $data['otp'] ?? null;
+        $recoveryCode = $data['recovery_code'] ?? null;
+
+        // Vérifier qu'au moins un code est fourni
+        if ($otp === null && $recoveryCode === null) {
+            return $this->json(['error' => 'Either OTP code or recovery code is required'], 400);
+        }
+
+        // Vérifier avec OTP
+        if ($otp !== null) {
+            if (!$this->twoFactorService->verifyCode($user, $otp)) {
+                return $this->json(['error' => 'Invalid OTP code'], 400);
+            }
+            return $this->json([
+                'message' => '2FA verification successful',
+            ]);
+        }
+
+        // Vérifier avec code de récupération
+        if ($recoveryCode !== null) {
+            if (!$this->twoFactorService->verifyBackupCode($user, $recoveryCode)) {
+                return $this->json(['error' => 'Invalid recovery code'], 400);
+            }
+            return $this->json([
+                'message' => '2FA verification successful',
+            ]);
+        }
+
+        return $this->json(['error' => 'Verification failed'], 400);
+    }
 }
