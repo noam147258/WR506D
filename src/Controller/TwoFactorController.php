@@ -25,30 +25,40 @@ class TwoFactorController extends AbstractController
     #[Route('/setup', name: 'app_2fa_setup', methods: ['POST'])]
     public function setup(): JsonResponse
     {
-        $user = $this->getUser();
+        try {
+            $user = $this->getUser();
 
-        if (!$user instanceof User) {
-            return $this->json(['error' => 'User not found'], 401);
+            if (!$user instanceof User) {
+                return $this->json(['error' => 'User not found'], 401);
+            }
+
+            $secret = $this->twoFactorService->generateSecret();
+            $user->setTwoFactorSecret($secret);
+            // ON FORCE A FALSE !
+            $user->setTwoFactorEnabled(false);
+
+            $this->entityManager->flush();
+
+            // Recharger l'utilisateur depuis la base pour avoir le secret à jour
+            $this->entityManager->refresh($user);
+
+            // QR code
+            $qrCodeDataUri = $this->twoFactorService->getQrCode($user);
+            //--- URL de provision générée par le module OTP
+            $provisioningUri = $this->twoFactorService->getProvisioningUri($user);
+
+            return $this->json([
+                'secret' => $secret,
+                'qr_code' => $qrCodeDataUri,
+                'provisioning_uri' => $provisioningUri,
+                'message' => 'Scannez le QR code avec votre application d\'authentification (Google Authenticator, Authy, etc.)',
+            ]);
+        } catch (\Exception $e) {
+            return $this->json([
+                'error' => 'Failed to setup 2FA',
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        $secret = $this->twoFactorService->generateSecret();
-        $user->setTwoFactorSecret($secret);
-        // ON FORCE A FALSE !
-        $user->setTwoFactorEnabled(false);
-
-        $this->entityManager->flush();
-
-        // QR code
-        $qrCodeDataUri = $this->twoFactorService->getQrCode($user);
-        //--- URL de provision générée par le module OTP
-        $provisioningUri = $this->twoFactorService->getProvisioningUri($user);
-
-        return $this->json([
-            'secret' => $secret,
-            'qr_code' => $qrCodeDataUri,
-            'provisioning_uri' => $provisioningUri,
-            'message' => 'Scannez le QR code avec votre application d\'authentification (Google Authenticator, Authy, etc.)',
-        ]);
     }
 
     #[Route('/enable', name: 'app_2fa_enable', methods: ['POST'])]
