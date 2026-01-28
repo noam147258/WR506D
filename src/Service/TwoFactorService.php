@@ -64,7 +64,7 @@ class TwoFactorService
             $provisioningUri = $this->getProvisioningUri($user);
 
             /** @phpstan-ignore-next-line */
-            $result = Builder::create()
+            $result = (new Builder())
                 ->writer(new PngWriter())
                 ->data($provisioningUri)
                 ->encoding(new Encoding('UTF-8'))
