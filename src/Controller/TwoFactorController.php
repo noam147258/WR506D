@@ -102,4 +102,49 @@ class TwoFactorController extends AbstractController
             'warning' => 'Save these backup codes in a safe place. You will need them if you lose access to your authenticator app.',
         ]);
     }
+
+    #[Route('/verify-enable', name: 'app_2fa_verify_enable', methods: ['POST'])]
+    public function verifyEnable(Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return $this->json(['error' => 'User not found'], 401);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $otp = $data['otp'] ?? '';
+
+        if (empty($otp)) {
+            return $this->json(['error' => 'OTP code is required'], 400);
+        }
+
+        // Verify the code
+        if (!$this->twoFactorService->verifyCode($user, $otp)) {
+            return $this->json(['error' => 'Invalid OTP code'], 400);
+        }
+
+        return $this->json([
+            'message' => '2FA code verified successfully',
+            'verified' => true,
+        ]);
+    }
+
+    #[Route('/status', name: 'app_2fa_status', methods: ['GET'])]
+    public function status(): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return $this->json(['error' => 'User not found'], 401);
+        }
+
+        return $this->json([
+            'enabled' => $user->isTwoFactorEnabled(),
+            'has_secret' => $user->getTwoFactorSecret() !== null,
+            'has_backup_codes' => $user->getTwoFactorBackupCodes() !== null && count($user->getTwoFactorBackupCodes()) > 0,
+        ]);
+    }
 }
