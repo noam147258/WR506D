@@ -64,14 +64,14 @@ class TwoFactorService
             $provisioningUri = $this->getProvisioningUri($user);
 
             /** @phpstan-ignore-next-line */
-            $result = (new Builder())
-                ->writer(new PngWriter())
-                ->data($provisioningUri)
-                ->encoding(new Encoding('UTF-8'))
-                ->errorCorrectionLevel(ErrorCorrectionLevel::High)
-                ->size(300)
-                ->margin(10)
-                ->build();
+            $result = (new Builder(
+                writer: new PngWriter(),
+                data: $provisioningUri,
+                encoding: new Encoding('UTF-8'),
+                errorCorrectionLevel: ErrorCorrectionLevel::High,
+                size: 300,
+                margin: 10
+            ))->build();
 
             return 'data:image/png;base64,' . base64_encode($result->getString());
         } catch (\Exception $e) {
