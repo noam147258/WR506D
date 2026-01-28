@@ -12,14 +12,17 @@ RUN apk add --no-cache \
     postgresql-dev \
     libzip-dev \
     icu-dev \
-    oniguruma-dev
+    oniguruma-dev \
+    libpng-dev \
+    freetype-dev
 
 # Install PHP extensions
 RUN docker-php-ext-install \
     pdo_pgsql \
     zip \
     intl \
-    opcache
+    opcache \
+    gd
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -47,6 +50,8 @@ RUN apk add --no-cache \
     libzip-dev \
     icu-dev \
     oniguruma-dev \
+    libpng-dev \
+    freetype-dev \
     nginx \
     supervisor \
     openssl
@@ -56,7 +61,8 @@ RUN docker-php-ext-install \
     pdo_pgsql \
     zip \
     intl \
-    opcache
+    opcache \
+    gd
 
 # Configure opcache
 RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
